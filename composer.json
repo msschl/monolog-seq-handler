@@ -1,0 +1,39 @@
+{
+    "name": "msschl/monolog-seq-handler",
+    "description": "msschl/monolog-seq-handler sends log records to a Seq-Server.",
+    "keywords": [
+        "monolog",
+        "handler",
+        "seq",
+        "structured logging"
+    ],
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Markus Schlotbohm",
+            "email": "markus.schlotbohm@gmx.de"
+        }
+    ],
+    "prefer-stable": true,
+    "require": {
+        "php": "^7.0",
+        "php-http/client-implementation": "^1.0",
+        "php-http/httplug": "^1.0",
+        "monolog/monolog": "^1.23",
+        "msschl/monolog-http-handler": "~0.0"
+    },
+    "require-dev": {
+        "php-http/mock-client": "^1.0",
+        "php-http/guzzle6-adapter": "1.1.1",
+        "php-http/message": "^1.0",
+        "guzzlehttp/psr7": "^1.0",
+        "phpunit/phpunit": "^6.0",
+        "php-coveralls/php-coveralls": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Msschl\\Monolog\\": "src"
+        }
+    }
+}
