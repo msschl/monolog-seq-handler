@@ -124,7 +124,7 @@ class SeqCompactJsonFormatter extends SeqBaseFormatter
         return $data;
     }
 
-    private function normalizeArray(array $array)
+    private function normalizeArray($array)
     {
         $normalized = array();
 
@@ -145,17 +145,11 @@ class SeqCompactJsonFormatter extends SeqBaseFormatter
     {
         switch ($key) {
             case 'message':
-                $array['@m'] = $value;
-                if (!(strpos($value, '{') === false)) {
-                    $array['@mt'] = $value;
-                }
+                $array = $this->processMessage($array, $value);
                 break;
 
             case 'datetime':
-                if ($value instanceof \DateTime) {
-                    $value = $value->format(DateTime::ISO8601);
-                }
-                $array['@t'] = $value;
+                $array = $this->processDateTime($array, $value);
                 break;
 
             case 'level':
@@ -166,41 +160,75 @@ class SeqCompactJsonFormatter extends SeqBaseFormatter
                 break;
 
             case 'extra':
-                if (is_array($value) && is_array($normalizedArray = $this->normalize($value))) {
-                    if ($this->extractExtras) {
-                        $array = array_merge($normalizedArray, $array);
-                    } else {
-                        $array['Extra'] = $normalizedArray;
-                    }
-                }
+                $array = $this->processExtras($array, $value);
                 break;
 
             case 'context':
-                if (is_array($value)) {
-                    $exception = $this->extractException($value);
-                    $normalizedArray = $this->normalize($value);
-
-                    if (is_array($normalizedArray)) {
-                        if ($this->extractContext) {
-                            $array = array_merge($normalizedArray, $array);
-                        } else {
-                            $array['Context'] = $normalizedArray;
-                        }
-                    }
-
-                    if ($exception !== null) {
-                        if ($exception instanceof \Throwable) {
-                            $exception = $this->normalizeException($exception);
-                        }
-
-                        $array['@x'] = $exception;
-                    }
-                }
+                $array = $this->processContext($array, $value);
                 break;
 
             default:
                 $array[is_int($key) ? $key : SeqCompactJsonFormatter::ConvertSnakeCaseToPascalCase($key)] = $this->normalize($value);
                 break;
+        }
+
+        return $array;
+    }
+
+    private function processMessage($array, $value)
+    {
+        $array['@m'] = $value;
+        if (!(strpos($value, '{') === false)) {
+            $array['@mt'] = $value;
+        }
+
+        return $array;
+    }
+
+    private function processDateTime($array, $value)
+    {
+        if ($value instanceof \DateTime) {
+            $value = $value->format(DateTime::ISO8601);
+        }
+        $array['@t'] = $value;
+
+        return $array;
+    }
+
+    private function processExtras($array, $value)
+    {
+        if (is_array($value) && is_array($normalizedArray = $this->normalize($value))) {
+            if ($this->extractExtras) {
+                $array = array_merge($normalizedArray, $array);
+            } else {
+                $array['Extra'] = $normalizedArray;
+            }
+        }
+
+        return $array;
+    }
+
+    private function processContext($array, $value)
+    {
+        if (is_array($value)) {
+            $exception = $this->extractException($value);
+            $normalizedArray = $this->normalize($value);
+
+            if (is_array($normalizedArray)) {
+                if ($this->extractContext) {
+                    $array = array_merge($normalizedArray, $array);
+                } else {
+                    $array['Context'] = $normalizedArray;
+                }
+            }
+
+            if ($exception !== null) {
+                if ($exception instanceof \Throwable) {
+                    $exception = $this->normalizeException($exception);
+                }
+
+                $array['@x'] = $exception;
+            }
         }
 
         return $array;

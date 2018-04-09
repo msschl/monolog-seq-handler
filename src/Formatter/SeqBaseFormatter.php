@@ -74,8 +74,14 @@ abstract class SeqBaseFormatter extends JsonFormatter
     protected function extractException(array &$array) {
         $exception = $array['exception'] ?? null;
 
-        if ($exception !== null) {
-            unset($array['exception']);
+        if ($exception === null) {
+            return null;
+        }
+
+        unset($array['exception']);
+
+        if (!($exception instanceof \Throwable)) {
+            return null;
         }
 
         return $exception;
