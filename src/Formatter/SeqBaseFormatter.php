@@ -46,16 +46,11 @@ abstract class SeqBaseFormatter extends JsonFormatter
      * Normalizes an exception to a string.
      *
      * @param  Throwable $e The throwable instance to normalize.
-     * @throws InvalidArgumentException Thrown when the parameter is not an instance of a throwable.
      * @return string
      */
 	protected function normalizeException($e) : string
     {
-   		if (!$e instanceof \Throwable) {
-            throw new \InvalidArgumentException('Throwable expected, got ' . gettype($e) . ' / ' . get_class($e));
-        }
-
-        $previousText = '';
+   		$previousText = '';
         if ($previous = $e->getPrevious()) {
             do {
                 $previousText .= ', ' . get_class($previous) . '(code: ' . $previous->getCode() . '): ' . $previous->getMessage() . ' at ' . $previous->getFile() . ':' . $previous->getLine();

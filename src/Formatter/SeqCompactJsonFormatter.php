@@ -146,12 +146,16 @@ class SeqCompactJsonFormatter extends SeqBaseFormatter
                         break;
 
                     case 'extra':
-                        $normalizedArray = $this->normalize($value);
+                        if (is_array($value)) {
+                            $normalizedArray = $this->normalize($value);
 
-                        if ($this->extractExtras) {
-                            $normalized = array_merge($normalizedArray, $normalized);
+                            if ($this->extractExtras) {
+                                $normalized = array_merge($normalizedArray, $normalized);
+                            } else {
+                                $normalized['Extra'] = $normalizedArray;
+                            }
                         } else {
-                            $normalized['Extra'] = $normalizedArray;
+                            $normalized[is_int($key) ? $key : SeqCompactJsonFormatter::ConvertSnakeCaseToPascalCase($key)] = $this->normalize($value);
                         }
                         break;
 
@@ -183,7 +187,7 @@ class SeqCompactJsonFormatter extends SeqBaseFormatter
             return $normalized;
         }
 
-        if ($data instanceof Exception || $data instanceof Throwable) {
+        if ($data instanceof \Exception || $data instanceof \Throwable) {
             return $this->normalizeException($data);
         }
 

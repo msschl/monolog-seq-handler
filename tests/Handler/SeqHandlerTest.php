@@ -3,12 +3,13 @@
 namespace Msschl\Monolog\Tests\Handler;
 
 use Http\Mock\Client;
-use Monolog\Handler\BufferHandler;
+use Monolog\Formatter\FormatterInterface;
 use Monolog\Logger;
 use Msschl\Monolog\Formatter\SeqBaseFormatter;
 use Msschl\Monolog\Formatter\SeqCompactJsonFormatter;
 use Msschl\Monolog\Handler\SeqHandler;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\RequestInterface;
 
 /**
  * This file is part of the msschl\monolog-seq-handler package.
@@ -136,6 +137,48 @@ class SeqHandlerTest extends TestCase
 		$this->assertNotNull($this->handler->getFormatter());
 		$this->assertSame($expectedValue, $this->handler->getFormatter());
 		$this->assertSame($expectedValue->getContentType(), $this->handler->getHeader('Content-Type'));
+	}
+
+	public function testSetFormatterThrowsInvalidArgumentException()
+	{
+		$stub = $this->createMock(FormatterInterface::class);
+
+		try {
+    		$this->handler->setFormatter($stub);
+    		$this->assertTrue(false);
+    	} catch (\InvalidArgumentException $e) {
+    		$this->assertTrue(true);
+    	}
+	}
+
+	public function testGetDefaultFormatter()
+	{
+		$log = new Logger('logger');
+
+		$log->pushHandler($this->handler);
+
+		$log->error('Bar');
+
+		$this->assertInstanceOf(RequestInterface::class, $this->client->getLastRequest());
+		$this->assertNotNull($this->client->getLastRequest());
+
+		$this->assertNotNull($this->handler->getHeader('Content-Type'));
+		$this->assertTrue(is_string($this->handler->getHeader('Content-Type')));
+	}
+
+	public function testLogging()
+	{
+		$log = new Logger('logger');
+
+		$log->pushHandler($this->handler);
+
+		$log->error('Bar', ['exception' => new \Exception('test'), 'snake_case' => 'yes']);
+
+		$this->assertInstanceOf(RequestInterface::class, $this->client->getLastRequest());
+		$this->assertNotNull($this->client->getLastRequest());
+
+		$this->assertNotNull($this->handler->getHeader('Content-Type'));
+		$this->assertTrue(is_string($this->handler->getHeader('Content-Type')));
 	}
 
 	/**
