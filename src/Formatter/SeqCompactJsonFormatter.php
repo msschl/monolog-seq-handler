@@ -154,27 +154,27 @@ class SeqCompactJsonFormatter extends SeqBaseFormatter
                             } else {
                                 $normalized['Extra'] = $normalizedArray;
                             }
-                        } else {
-                            $normalized[is_int($key) ? $key : SeqCompactJsonFormatter::ConvertSnakeCaseToPascalCase($key)] = $this->normalize($value);
                         }
                         break;
 
                     case 'context':
-                        $exception = $this->extractException($value);
-                        $normalizedArray = $this->normalize($value);
+                        if (is_array($value)) {
+                            $exception = $this->extractException($value);
+                            $normalizedArray = $this->normalize($value);
 
-                        if ($this->extractContext) {
-                            $normalized = array_merge($normalizedArray, $normalized);
-                        } else {
-                            $normalized['Context'] = $normalizedArray;
-                        }
-
-                        if ($exception !== null) {
-                            if (($exception instanceof Exception || $exception instanceof Throwable)) {
-                                $exception = $this->normalizeException($exception);
+                            if ($this->extractContext) {
+                                $normalized = array_merge($normalizedArray, $normalized);
+                            } else {
+                                $normalized['Context'] = $normalizedArray;
                             }
 
-                            $normalized['@x'] = $exception;
+                            if ($exception !== null) {
+                                if (($exception instanceof \Exception || $exception instanceof \Throwable)) {
+                                    $exception = $this->normalizeException($exception);
+                                }
+
+                                $normalized['@x'] = $exception;
+                            }
                         }
                         break;
 

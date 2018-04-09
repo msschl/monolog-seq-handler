@@ -181,6 +181,46 @@ class SeqHandlerTest extends TestCase
 		$this->assertTrue(is_string($this->handler->getHeader('Content-Type')));
 	}
 
+	public function testLoggingWithoutExtracting()
+	{
+		$this->handler->getFormatter()->setExtractContent(false);
+		$this->handler->getFormatter()->setExtractExtras(false);
+
+		$log = new Logger('logger');
+
+		$log->pushHandler($this->handler);
+
+		$log->error('Bar', ['exception' => new \Exception('test'), 'snake_case' => 'yes']);
+
+		$this->assertInstanceOf(RequestInterface::class, $this->client->getLastRequest());
+		$this->assertNotNull($this->client->getLastRequest());
+
+		$this->assertNotNull($this->handler->getHeader('Content-Type'));
+		$this->assertTrue(is_string($this->handler->getHeader('Content-Type')));
+	}
+
+	public function testLoggingAboardNormalizationOver1000Items()
+	{
+		$array = [
+			new \Exception('test'),
+			'snake_case' => 'yes'
+		];
+
+		$array = array_fill(2, 1000, 'value');
+
+		$log = new Logger('logger');
+
+		$log->pushHandler($this->handler);
+
+		$log->error('Bar {exception}', $array);
+
+		$this->assertInstanceOf(RequestInterface::class, $this->client->getLastRequest());
+		$this->assertNotNull($this->client->getLastRequest());
+
+		$this->assertNotNull($this->handler->getHeader('Content-Type'));
+		$this->assertTrue(is_string($this->handler->getHeader('Content-Type')));
+	}
+
 	/**
 	 * This method is run once after each test method and frees the SeqHandler and MockClient instaces.
 	 *
