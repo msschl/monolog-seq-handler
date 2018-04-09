@@ -181,6 +181,21 @@ class SeqHandlerTest extends TestCase
 		$this->assertTrue(is_string($this->handler->getHeader('Content-Type')));
 	}
 
+	public function testLoggingExceptionIsNotAFalidType()
+	{
+		$log = new Logger('logger');
+
+		$log->pushHandler($this->handler);
+
+		$log->error('Bar', ['exception' => 'no']);
+
+		$this->assertInstanceOf(RequestInterface::class, $this->client->getLastRequest());
+		$this->assertNotNull($this->client->getLastRequest());
+
+		$this->assertNotNull($this->handler->getHeader('Content-Type'));
+		$this->assertTrue(is_string($this->handler->getHeader('Content-Type')));
+	}
+
 	public function testLoggingWithoutExtracting()
 	{
 		$this->handler->getFormatter()->setExtractContent(false);
