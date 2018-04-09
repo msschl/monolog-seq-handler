@@ -191,7 +191,7 @@ class SeqHandlerTest extends TestCase
 
 		$log->pushHandler($this->handler);
 
-		$log->error('Bar', ['exception' => new \Exception('test'), 'snake_case' => 'yes']);
+		$log->error('Bar', ['exception' => new \Exception('test', 0, new \Exception('a')), 'snake_case' => 'yes']);
 
 		$this->assertInstanceOf(RequestInterface::class, $this->client->getLastRequest());
 		$this->assertNotNull($this->client->getLastRequest());
