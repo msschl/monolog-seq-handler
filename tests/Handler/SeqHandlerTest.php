@@ -202,7 +202,7 @@ class SeqHandlerTest extends TestCase
 	public function testLoggingAboardNormalizationOver1000Items()
 	{
 		$array = [
-			new \Exception('test'),
+			0 => new \Exception('test', 0, new \Exception('test')),
 			'snake_case' => 'yes'
 		];
 
