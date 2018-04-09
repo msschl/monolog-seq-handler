@@ -145,31 +145,27 @@ class SeqCompactJsonFormatter extends SeqBaseFormatter
     {
         switch ($key) {
             case 'message':
-                $array = $this->processMessage($array, $value);
-                break;
+                return $this->processMessage($array, $value);
 
             case 'datetime':
-                $array = $this->processDateTime($array, $value);
-                break;
+                return $this->processDateTime($array, $value);
 
             case 'level':
                 $array['@l'] = $this->logLevelMap[$value];
                 $array['LogLevelCode'] = $value;
-                break;
+                return $array;
             case 'level_name':
-                break;
+                return $array;
 
             case 'extra':
-                $array = $this->processExtras($array, $value);
-                break;
+                return $this->processExtras($array, $value);
 
             case 'context':
-                $array = $this->processContext($array, $value);
-                break;
+                return $this->processContext($array, $value);
 
             default:
                 $array[is_int($key) ? $key : SeqCompactJsonFormatter::ConvertSnakeCaseToPascalCase($key)] = $this->normalize($value);
-                break;
+                return $array;
         }
 
         return $array;
