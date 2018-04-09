@@ -206,13 +206,12 @@ class SeqCompactJsonFormatter extends SeqBaseFormatter
                 }
             }
 
-            if ($exception !== null) {
-                if ($exception instanceof \Throwable) {
-                    $exception = $this->normalizeException($exception);
-                }
-
-                $array['@x'] = $exception;
+            if ($exception === null) {
+                return $array;
             }
+
+            $exception = $this->normalizeException($exception);
+            $array['@x'] = $exception;
         }
 
         return $array;
