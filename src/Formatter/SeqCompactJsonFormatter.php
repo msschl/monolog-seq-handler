@@ -194,25 +194,25 @@ class SeqCompactJsonFormatter extends SeqBaseFormatter
 
     private function processContext($array, $value)
     {
-        if (is_array($value)) {
-            $exception = $this->extractException($value);
-            $normalizedArray = $this->normalize($value);
-
-            if (is_array($normalizedArray)) {
-                if ($this->extractContext) {
-                    $array = array_merge($normalizedArray, $array);
-                } else {
-                    $array['Context'] = $normalizedArray;
-                }
-            }
-
-            if ($exception === null) {
-                return $array;
-            }
-
-            $exception = $this->normalizeException($exception);
-            $array['@x'] = $exception;
+        if (!is_array($value)) {
+            return $array;
         }
+
+        if (is_array($normalizedArray = $this->normalize($value))) {
+            if ($this->extractContext) {
+                $array = array_merge($normalizedArray, $array);
+            } else {
+                $array['Context'] = $normalizedArray;
+            }
+        }
+
+        $exception = $this->extractException($value);
+        if ($exception === null) {
+            return $array;
+        }
+
+        $exception = $this->normalizeException($exception);
+        $array['@x'] = $exception;
 
         return $array;
     }
