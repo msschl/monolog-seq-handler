@@ -199,11 +199,7 @@ class SeqCompactJsonFormatter extends SeqBaseFormatter
         }
 
         if (is_array($normalizedArray = $this->normalize($value))) {
-            if ($this->extractContext) {
-                $array = array_merge($normalizedArray, $array);
-            } else {
-                $array['Context'] = $normalizedArray;
-            }
+            $array = $this->extractContext ? array_merge($normalizedArray, $array) : $normalizedArray;
         }
 
         $exception = $this->extractException($value);
