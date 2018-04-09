@@ -114,81 +114,7 @@ class SeqCompactJsonFormatter extends SeqBaseFormatter
     protected function normalize($data)
     {
         if (is_array($data) || $data instanceof \Traversable) {
-            $normalized = array();
-
-            $count = 1;
-            foreach ($data as $key => $value) {
-                if ($count++ >= 1000) {
-                    $normalized['...'] = 'Over 1000 items, aborting normalization';
-                    break;
-                }
-
-                switch ($key) {
-                    case 'message':
-                        $normalized['@m'] = $value;
-                        if (!(strpos($value, '{') === false)) {
-                            $normalized['@mt'] = $value;
-                        }
-                        break;
-
-                    case 'datetime':
-                        if ($value instanceof \DateTime) {
-                            $value = $value->format(DateTime::ISO8601);
-                        }
-                        $normalized['@t'] = $value;
-                        break;
-
-                    case 'level':
-                        $normalized['@l'] = $this->logLevelMap[$value];
-                        $normalized['LogLevelCode'] = $value;
-                        break;
-                    case 'level_name':
-                        break;
-
-                    case 'extra':
-                        if (is_array($value)) {
-                            $normalizedArray = $this->normalize($value);
-
-                            if (is_array($normalizedArray)) {
-                                if ($this->extractExtras) {
-                                    $normalized = array_merge($normalizedArray, $normalized);
-                                } else {
-                                    $normalized['Extra'] = $normalizedArray;
-                                }
-                            }
-                        }
-                        break;
-
-                    case 'context':
-                        if (is_array($value)) {
-                            $exception = $this->extractException($value);
-                            $normalizedArray = $this->normalize($value);
-
-                            if (is_array($normalizedArray)) {
-                                if ($this->extractContext) {
-                                    $normalized = array_merge($normalizedArray, $normalized);
-                                } else {
-                                    $normalized['Context'] = $normalizedArray;
-                                }
-                            }
-
-                            if ($exception !== null) {
-                                if (($exception instanceof \Exception || $exception instanceof \Throwable)) {
-                                    $exception = $this->normalizeException($exception);
-                                }
-
-                                $normalized['@x'] = $exception;
-                            }
-                        }
-                        break;
-
-                    default:
-                        $normalized[is_int($key) ? $key : SeqCompactJsonFormatter::ConvertSnakeCaseToPascalCase($key)] = $this->normalize($value);
-                        break;
-                }
-            }
-
-            return $normalized;
+            return $this->normalizeArray($data);
         }
 
         if ($data instanceof \Exception || $data instanceof \Throwable) {
@@ -196,5 +122,87 @@ class SeqCompactJsonFormatter extends SeqBaseFormatter
         }
 
         return $data;
+    }
+
+    private function normalizeArray(array $array)
+    {
+        $normalized = array();
+
+        $count = 1;
+        foreach ($array as $key => $value) {
+            if ($count++ >= 1000) {
+                $normalized['...'] = 'Over 1000 items, aborting normalization';
+                break;
+            }
+
+            $normalized = $this->processLogRecord($normalized, $key, $value, $count);
+        }
+
+        return $normalized;
+    }
+
+    private function processLogRecord($array, $key, $value, $count)
+    {
+        switch ($key) {
+            case 'message':
+                $array['@m'] = $value;
+                if (!(strpos($value, '{') === false)) {
+                    $array['@mt'] = $value;
+                }
+                break;
+
+            case 'datetime':
+                if ($value instanceof \DateTime) {
+                    $value = $value->format(DateTime::ISO8601);
+                }
+                $array['@t'] = $value;
+                break;
+
+            case 'level':
+                $array['@l'] = $this->logLevelMap[$value];
+                $array['LogLevelCode'] = $value;
+                break;
+            case 'level_name':
+                break;
+
+            case 'extra':
+                if (is_array($value) && $normalizedArray = $this->normalize($value) && is_array($normalizedArray)) {
+                    if ($this->extractExtras) {
+                        $array = array_merge($normalizedArray, $array);
+                    } else {
+                        $array['Extra'] = $normalizedArray;
+                    }
+                }
+                break;
+
+            case 'context':
+                if (is_array($value)) {
+                    $exception = $this->extractException($value);
+                    $normalizedArray = $this->normalize($value);
+
+                    if (is_array($normalizedArray)) {
+                        if ($this->extractContext) {
+                            $array = array_merge($normalizedArray, $array);
+                        } else {
+                            $array['Context'] = $normalizedArray;
+                        }
+                    }
+
+                    if ($exception !== null) {
+                        if (($exception instanceof \Exception || $exception instanceof \Throwable)) {
+                            $exception = $this->normalizeException($exception);
+                        }
+
+                        $array['@x'] = $exception;
+                    }
+                }
+                break;
+
+            default:
+                $array[is_int($key) ? $key : SeqCompactJsonFormatter::ConvertSnakeCaseToPascalCase($key)] = $this->normalize($value);
+                break;
+        }
+
+        return $array;
     }
 }
