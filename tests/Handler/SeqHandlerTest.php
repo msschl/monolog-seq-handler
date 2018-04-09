@@ -185,6 +185,7 @@ class SeqHandlerTest extends TestCase
 	{
 		$this->handler->getFormatter()->setExtractContent(false);
 		$this->handler->getFormatter()->setExtractExtras(false);
+		$this->handler->getFormatter()->includeStacktraces(true);
 
 		$log = new Logger('logger');
 
