@@ -149,10 +149,12 @@ class SeqCompactJsonFormatter extends SeqBaseFormatter
                         if (is_array($value)) {
                             $normalizedArray = $this->normalize($value);
 
-                            if ($this->extractExtras) {
-                                $normalized = array_merge($normalizedArray, $normalized);
-                            } else {
-                                $normalized['Extra'] = $normalizedArray;
+                            if (is_array($normalizedArray)) {
+                                if ($this->extractExtras) {
+                                    $normalized = array_merge($normalizedArray, $normalized);
+                                } else {
+                                    $normalized['Extra'] = $normalizedArray;
+                                }
                             }
                         }
                         break;
@@ -162,10 +164,12 @@ class SeqCompactJsonFormatter extends SeqBaseFormatter
                             $exception = $this->extractException($value);
                             $normalizedArray = $this->normalize($value);
 
-                            if ($this->extractContext) {
-                                $normalized = array_merge($normalizedArray, $normalized);
-                            } else {
-                                $normalized['Context'] = $normalizedArray;
+                            if (is_array($normalizedArray)) {
+                                if ($this->extractContext) {
+                                    $normalized = array_merge($normalizedArray, $normalized);
+                                } else {
+                                    $normalized['Context'] = $normalizedArray;
+                                }
                             }
 
                             if ($exception !== null) {
