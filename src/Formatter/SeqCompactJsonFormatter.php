@@ -117,7 +117,7 @@ class SeqCompactJsonFormatter extends SeqBaseFormatter
             return $this->normalizeArray($data);
         }
 
-        if ($data instanceof \Exception || $data instanceof \Throwable) {
+        if ($data instanceof \Throwable) {
             return $this->normalizeException($data);
         }
 
@@ -167,8 +167,6 @@ class SeqCompactJsonFormatter extends SeqBaseFormatter
                 $array[is_int($key) ? $key : SeqCompactJsonFormatter::ConvertSnakeCaseToPascalCase($key)] = $this->normalize($value);
                 return $array;
         }
-
-        return $array;
     }
 
     private function processMessage($array, $value)
