@@ -141,7 +141,7 @@ class SeqCompactJsonFormatter extends SeqBaseFormatter
         return $normalized;
     }
 
-    private function processLogRecord($array, $key, $value, $count)
+    private function processLogRecord($array, $key, $value, /** @scrutinizer ignore-unused */ $count)
     {
         switch ($key) {
             case 'message':
@@ -166,7 +166,7 @@ class SeqCompactJsonFormatter extends SeqBaseFormatter
                 break;
 
             case 'extra':
-                if (is_array($value) && $normalizedArray = $this->normalize($value) && is_array($normalizedArray)) {
+                if (is_array($value) && is_array($normalizedArray = $this->normalize($value))) {
                     if ($this->extractExtras) {
                         $array = array_merge($normalizedArray, $array);
                     } else {
@@ -189,7 +189,7 @@ class SeqCompactJsonFormatter extends SeqBaseFormatter
                     }
 
                     if ($exception !== null) {
-                        if (($exception instanceof \Exception || $exception instanceof \Throwable)) {
+                        if ($exception instanceof \Throwable) {
                             $exception = $this->normalizeException($exception);
                         }
 
