@@ -144,25 +144,15 @@ class SeqCompactJsonFormatter extends SeqBaseFormatter
     private function processLogRecord($array, $key, $value, /** @scrutinizer ignore-unused */ $count)
     {
         switch ($key) {
-            case 'message':
-                return $this->processMessage($array, $value);
-
-            case 'datetime':
-                return $this->processDateTime($array, $value);
-
+            case 'message': return $this->processMessage($array, $value);
+            case 'datetime': return $this->processDateTime($array, $value);
             case 'level':
                 $array['@l'] = $this->logLevelMap[$value];
                 $array['LogLevelCode'] = $value;
                 return $array;
-            case 'level_name':
-                return $array;
-
-            case 'extra':
-                return $this->processExtras($array, $value);
-
-            case 'context':
-                return $this->processContext($array, $value);
-
+            case 'level_name': return $array;
+            case 'extra': return $this->processExtras($array, $value);
+            case 'context': return $this->processContext($array, $value);
             default:
                 $array[is_int($key) ? $key : SeqCompactJsonFormatter::ConvertSnakeCaseToPascalCase($key)] = $this->normalize($value);
                 return $array;
