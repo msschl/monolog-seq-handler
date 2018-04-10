@@ -5,6 +5,7 @@ namespace Msschl\Monolog\Formatter;
 use DateTime;
 use Monolog\Formatter\FormatterInterface;
 use Monolog\Formatter\JsonFormatter;
+use Msschl\Monolog\Exception\InvalidCodePathException;
 use Throwable;
 
 /**
@@ -44,10 +45,10 @@ class SeqCompactJsonFormatter extends SeqBaseFormatter
      */
 	public function __construct(bool $extractContext = true, bool $extractExtras = true)
 	{
-        $this->appendNewline = false;
-        $this->batchMode = JsonFormatter::BATCH_MODE_NEWLINES;
         $this->extractContext = $extractContext;
         $this->extractExtras = $extractExtras;
+
+        parent::__construct(JsonFormatter::BATCH_MODE_NEWLINES);
 	}
 
     /**
@@ -106,121 +107,146 @@ class SeqCompactJsonFormatter extends SeqBaseFormatter
     }
 
     /**
-     * Normalizes given $data.
+     * Return a JSON-encoded array of records.
      *
-     * @param mixed $data The data to normalize.
-     * @return mixed
+     * @param  array  $records
+     * @return string
      */
-    protected function normalize($data)
+    protected function formatBatchJson(array $records)
     {
-        if (is_array($data) || $data instanceof \Traversable) {
-            return $this->normalizeArray($data);
-        }
-
-        if ($data instanceof \Throwable) {
-            return $this->normalizeException($data);
-        }
-
-        return $data;
+        throw new InvalidCodePathException();
     }
 
-    private function normalizeArray($array)
+    /**
+     * Processes the log message.
+     *
+     * @param  array  &$normalized Reference to the normalized array, where all normalized data get stored.
+     * @param  string $message     The log message.
+     * @return void
+     */
+    protected function processMessage(array &$normalized, string $message)
     {
-        $normalized = array();
+        $normalized['@m'] = $message;
+        if (!(strpos($message, '{') === false)) {
+            $normalized['@mt'] = $message;
+        }
+    }
 
+    /**
+     * Processes the context array.
+     *
+     * @param  array &$normalized Reference to the normalized array, where all normalized data get stored.
+     * @param  array $message     The context array.
+     * @return void
+     */
+    protected function processContext(array &$normalized, array $context)
+    {
+        $exception = $this->extractException($context);
+        if ($exception !== null) {
+            $normalized['@x'] = $this->normalizeException($exception);
+        }
+
+        $array = [];
         $count = 1;
-        foreach ($array as $key => $value) {
+        foreach ($context as $key => $value) {
             if ($count++ >= 1000) {
-                $normalized['...'] = 'Over 1000 items, aborting normalization';
+                $array['...'] = 'Over 1000 items, aborting normalization';
                 break;
             }
 
-            $normalized = $this->processLogRecord($normalized, $key, $value, $count);
-        }
-
-        return $normalized;
-    }
-
-    private function processLogRecord($array, $key, $value, /** @scrutinizer ignore-unused */ $count)
-    {
-        switch ($key) {
-            case 'message': return $this->processMessage($array, $value);
-            case 'datetime': return $this->processDateTime($array, $value);
-            case 'level':
-                $array['@l'] = $this->logLevelMap[$value];
-                $array['LogLevelCode'] = $value;
-                return $array;
-            case 'level_name': return $array;
-            case 'extra': return $this->processExtras($array, $value);
-            case 'context': return $this->processContext($array, $value);
-            default:
-                $array[is_int($key) ? $key : SeqCompactJsonFormatter::ConvertSnakeCaseToPascalCase($key)] = $this->normalize($value);
-                return $array;
-        }
-    }
-
-    private function processMessage($array, $value)
-    {
-        $array['@m'] = $value;
-        if (!(strpos($value, '{') === false)) {
-            $array['@mt'] = $value;
-        }
-
-        return $array;
-    }
-
-    private function processDateTime($array, $value)
-    {
-        if ($value instanceof \DateTime) {
-            $value = $value->format(DateTime::ISO8601);
-        }
-        $array['@t'] = $value;
-
-        return $array;
-    }
-
-    private function processExtras($array, $value)
-    {
-        if (is_array($value) && is_array($normalizedArray = $this->normalize($value))) {
-            if ($this->extractExtras) {
-                $array = array_merge($normalizedArray, $array);
+            if (is_int($key)) {
+                $array[] = $value;
             } else {
-                $array['Extra'] = $normalizedArray;
+                $key = SeqCompactJsonFormatter::ConvertSnakeCaseToPascalCase($key);
+                $array[$key] = $value;
             }
         }
 
-        return $array;
+        if ($this->extractContext) {
+            $normalized = array_merge($array, $normalized);
+        } else {
+            $normalized['Context'] = $array;
+        }
     }
 
-    private function processContext($array, $value)
+    /**
+     * Processes the log level.
+     *
+     * @param  array &$normalized Reference to the normalized array, where all normalized data get stored.
+     * @param  int   $message     The log level.
+     * @return void
+     */
+    protected function processLevel(array &$normalized, int $level)
     {
-        if (!is_array($value)) {
-            return $array;
-        }
-
-        $array = $this->processContextArray($array, $value);
-
-        return $this->processContextException($array, $value);
+        $normalized['@l'] = $this->logLevelMap[$level];
+        $normalized['Code'] = $level;
     }
 
-    private function processContextArray(array $array, array $value) : array
+    /**
+     * Processes the log level name.
+     *
+     * @param  array  &$normalized Reference to the normalized array, where all normalized data get stored.
+     * @param  string $message     The log level name.
+     * @return void
+     */
+    protected function processLevelName(array &$normalized, string $levelName)
     {
-        if (is_array($normalizedArray = $this->normalize($value))) {
-            return $this->extractContext ? array_merge($normalizedArray, $array) : $normalizedArray;
-        }
-
-        return $array;
+        $normalized['LevelName'] = $levelName;
     }
 
-    private function processContextException(array $array, array $value) : array
+    /**
+     * Processes the channel name.
+     *
+     * @param  array  &$normalized Reference to the normalized array, where all normalized data get stored.
+     * @param  string $message     The log channel name.
+     * @return void
+     */
+    protected function processChannel(array &$normalized, string $name)
     {
-        $exception = $this->extractException($value);
-        if ($exception === null) {
-            return $array;
+        $normalized['Channel'] = $name;
+    }
+
+    /**
+     * Processes the log timestamp.
+     *
+     * @param  array    &$normalized Reference to the normalized array, where all normalized data get stored.
+     * @param  DateTime $message     The log timestamp.
+     * @return void
+     */
+    protected function processDatetime(array &$normalized, \DateTime $datetime)
+    {
+        $normalized['@t'] = $datetime->format(DateTime::ISO8601);
+    }
+
+    /**
+     * Processes the extras array.
+     *
+     * @param  array &$normalized Reference to the normalized array, where all normalized data get stored.
+     * @param  array $message     The extras array.
+     * @return void
+     */
+    protected function processExtra(array &$normalized, array $extras)
+    {
+        $array = [];
+        $count = 1;
+        foreach ($extras as $key => $value) {
+            if ($count++ >= 1000) {
+                $array['...'] = 'Over 1000 items, aborting normalization';
+                break;
+            }
+
+            if (is_int($key)) {
+                $array[] = $value;
+            } else {
+                $key = SeqCompactJsonFormatter::ConvertSnakeCaseToPascalCase($key);
+                $array[$key] = $value;
+            }
         }
 
-        $array['@x'] = $this->normalizeException($exception);
-
-        return $array;
+        if ($this->extractExtras) {
+            $normalized = array_merge($array, $normalized);
+        } else {
+            $normalized['Extra'] = $array;
+        }
     }
 }
