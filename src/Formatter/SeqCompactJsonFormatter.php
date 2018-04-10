@@ -6,7 +6,6 @@ use DateTime;
 use Monolog\Formatter\FormatterInterface;
 use Monolog\Formatter\JsonFormatter;
 use Msschl\Monolog\Exception\InvalidCodePathException;
-use Throwable;
 
 /**
  * This file is part of the msschl\monolog-seq-handler package.
@@ -195,7 +194,7 @@ class SeqCompactJsonFormatter extends SeqBaseFormatter
      * @param  DateTime $message     The log timestamp.
      * @return void
      */
-    protected function processDatetime(array &$normalized, \DateTime $datetime)
+    protected function processDatetime(array &$normalized, DateTime $datetime)
     {
         $normalized['@t'] = $datetime->format(DateTime::ISO8601);
     }
