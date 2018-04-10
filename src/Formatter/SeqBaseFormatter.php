@@ -5,7 +5,6 @@ namespace Msschl\Monolog\Formatter;
 use DateTime;
 use Monolog\Formatter\FormatterInterface;
 use Monolog\Formatter\JsonFormatter;
-use Throwable;
 
 /**
  * This file is part of the msschl\monolog-seq-handler package.
@@ -36,6 +35,17 @@ abstract class SeqBaseFormatter extends JsonFormatter
     ];
 
     /**
+     * Initializes a new instance of the {@see SeqBaseFormatter} class.
+     *
+     * @param  int $batchMode The json batch mode.
+     */
+    function __construct($batchMode)
+    {
+        $this->appendNewline = false;
+        $this->batchMode = $batchMode;
+    }
+
+    /**
      * Returns a string with the content type for the seq-formatter.
      *
      * @return string
@@ -43,19 +53,101 @@ abstract class SeqBaseFormatter extends JsonFormatter
     public abstract function getContentType() : string;
 
     /**
+     * Normalizes the log record array.
+     *
+     * @param array $recod The log record to normalize.
+     * @return array
+     */
+    protected function normalize($record)
+    {
+        if (!is_array($record) && !$record instanceof \Traversable) {
+            /* istanbul ignore next */
+            throw new \InvalidArgumentException('Array/Traversable expected, got ' . gettype($record) . ' / ' . get_class($record));
+        }
+
+        $normalized = [];
+
+        foreach ($record as $key => $value) {
+            $key = SeqBaseFormatter::ConvertSnakeCaseToPascalCase($key);
+
+            $this->{'process' . $key}($normalized, $value);
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * Processes the log message.
+     *
+     * @param  array  &$normalized Reference to the normalized array, where all normalized data get stored.
+     * @param  string $message     The log message.
+     * @return void
+     */
+    protected abstract function processMessage(array &$normalized, string $message);
+
+    /**
+     * Processes the context array.
+     *
+     * @param  array &$normalized Reference to the normalized array, where all normalized data get stored.
+     * @param  array $message     The context array.
+     * @return void
+     */
+    protected abstract function processContext(array &$normalized, array $context);
+
+    /**
+     * Processes the log level.
+     *
+     * @param  array &$normalized Reference to the normalized array, where all normalized data get stored.
+     * @param  int   $message     The log level.
+     * @return void
+     */
+    protected abstract function processLevel(array &$normalized, int $level);
+
+    /**
+     * Processes the log level name.
+     *
+     * @param  array  &$normalized Reference to the normalized array, where all normalized data get stored.
+     * @param  string $message     The log level name.
+     * @return void
+     */
+    protected abstract function processLevelName(array &$normalized, string $levelName);
+
+    /**
+     * Processes the channel name.
+     *
+     * @param  array  &$normalized Reference to the normalized array, where all normalized data get stored.
+     * @param  string $message     The log channel name.
+     * @return void
+     */
+    protected abstract function processChannel(array &$normalized, string $name);
+
+    /**
+     * Processes the log timestamp.
+     *
+     * @param  array    &$normalized Reference to the normalized array, where all normalized data get stored.
+     * @param  DateTime $message     The log timestamp.
+     * @return void
+     */
+    protected abstract function processDatetime(array &$normalized, DateTime $datetime);
+
+    /**
+     * Processes the extras array.
+     *
+     * @param  array &$normalized Reference to the normalized array, where all normalized data get stored.
+     * @param  array $message     The extras array.
+     * @return void
+     */
+    protected abstract function processExtra(array &$normalized, array $extras);
+
+    /**
      * Normalizes an exception to a string.
      *
      * @param  Throwable $e The throwable instance to normalize.
-     * @throws InvalidArgumentException Thrown when the parameter is not an instance of a throwable.
      * @return string
      */
 	protected function normalizeException($e) : string
     {
-   		if (!$e instanceof \Throwable) {
-            throw new \InvalidArgumentException('Throwable expected, got ' . gettype($e) . ' / ' . get_class($e));
-        }
-
-        $previousText = '';
+   		$previousText = '';
         if ($previous = $e->getPrevious()) {
             do {
                 $previousText .= ', ' . get_class($previous) . '(code: ' . $previous->getCode() . '): ' . $previous->getMessage() . ' at ' . $previous->getFile() . ':' . $previous->getLine();
@@ -79,8 +171,14 @@ abstract class SeqBaseFormatter extends JsonFormatter
     protected function extractException(array &$array) {
         $exception = $array['exception'] ?? null;
 
-        if ($exception !== null) {
-            unset($array['exception']);
+        if ($exception === null) {
+            return null;
+        }
+
+        unset($array['exception']);
+
+        if (!($exception instanceof \Throwable)) {
+            return null;
         }
 
         return $exception;
