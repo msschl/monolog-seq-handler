@@ -106,13 +106,13 @@ class SeqCompactJsonFormatter extends SeqBaseFormatter
     }
 
     /**
-     * Return a JSON-encoded array of records.
+     * This function should never be called!!!
      *
-     * @param  array  $records
-     * @return string
+     * @throws \Msschl\Monolog\Exception\InvalidCodePathException
      */
     protected function formatBatchJson(array $records)
     {
+        /* istanbul ignore next */
         throw new InvalidCodePathException();
     }
 
