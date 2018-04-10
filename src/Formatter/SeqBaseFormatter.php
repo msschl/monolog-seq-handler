@@ -61,6 +61,7 @@ abstract class SeqBaseFormatter extends JsonFormatter
     protected function normalize($record)
     {
         if (!is_array($record) && !$record instanceof \Traversable) {
+            /* istanbul ignore next */
             throw new \InvalidArgumentException('Array/Traversable expected, got ' . gettype($record) . ' / ' . get_class($record));
         }
 
