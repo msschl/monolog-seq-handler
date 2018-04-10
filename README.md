@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/msschl/monolog-seq-handler.svg?branch=master)](https://travis-ci.org/msschl/monolog-seq-handler)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/msschl/monolog-seq-handler/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/msschl/monolog-seq-handler/?branch=master)
 [![Code Intelligence Status](https://scrutinizer-ci.com/g/msschl/monolog-seq-handler/badges/code-intelligence.svg?b=master)](https://scrutinizer-ci.com/code-intelligence)
-[![Coverage Status](https://coveralls.io/repos/github/msschl/monolog-seq-handler/badge.svg?branch=master&service=github)](https://coveralls.io/github/msschl/monolog-seq-handler?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/msschl/monolog-seq-handler/badge.svg?branch=master)](https://coveralls.io/github/msschl/monolog-seq-handler?branch=master)
 
 # Monolog [Seq](https://getseq.net/) Handler
 
