@@ -141,26 +141,8 @@ class SeqCompactJsonFormatter extends SeqBaseFormatter
      */
     protected function processContext(array &$normalized, array $context)
     {
-        $exception = $this->extractException($context);
-        if ($exception !== null) {
-            $normalized['@x'] = $this->normalizeException($exception);
-        }
-
-        $array = [];
-        $count = 1;
-        foreach ($context as $key => $value) {
-            if ($count++ >= 1000) {
-                $array['...'] = 'Over 1000 items, aborting normalization';
-                break;
-            }
-
-            if (is_int($key)) {
-                $array[] = $value;
-            } else {
-                $key = SeqCompactJsonFormatter::ConvertSnakeCaseToPascalCase($key);
-                $array[$key] = $value;
-            }
-        }
+        $this->processContextException($normalized, $context);
+        $array = $this->getNormalizedArray($context);
 
         if ($this->extractContext) {
             $normalized = array_merge($array, $normalized);
@@ -227,26 +209,54 @@ class SeqCompactJsonFormatter extends SeqBaseFormatter
      */
     protected function processExtra(array &$normalized, array $extras)
     {
-        $array = [];
-        $count = 1;
-        foreach ($extras as $key => $value) {
-            if ($count++ >= 1000) {
-                $array['...'] = 'Over 1000 items, aborting normalization';
-                break;
-            }
-
-            if (is_int($key)) {
-                $array[] = $value;
-            } else {
-                $key = SeqCompactJsonFormatter::ConvertSnakeCaseToPascalCase($key);
-                $array[$key] = $value;
-            }
-        }
+        $array = $this->getNormalizedArray($extras);
 
         if ($this->extractExtras) {
             $normalized = array_merge($array, $normalized);
         } else {
             $normalized['Extra'] = $array;
         }
+    }
+
+    /**
+     * Extracts the exception from the context array.
+     *
+     * @param  array  &$normalized Reference to the normalized array, where all normalized data get stored.
+     * @param  array  $context     The context array.
+     * @return void
+     */
+    private function processContextException(array &$normalized, array $context)
+    {
+        $exception = $this->extractException($context);
+        if ($exception !== null) {
+            $normalized['@x'] = $this->normalizeException($exception);
+        }
+    }
+
+    /**
+     * Gets a normalized array.
+     *
+     * @param  array $array The array to process.
+     * @return array
+     */
+    private function getNormalizedArray(array $array) : array
+    {
+        $normalized = [];
+        $count = 1;
+        foreach ($array as $key => $value) {
+            if ($count++ >= 1000) {
+                $normalized['...'] = 'Over 1000 items, aborting normalization';
+                break;
+            }
+
+            if (is_int($key)) {
+                $normalized[] = $value;
+            } else {
+                $key = SeqCompactJsonFormatter::ConvertSnakeCaseToPascalCase($key);
+                $normalized[$key] = $value;
+            }
+        }
+
+        return $normalized;
     }
 }
