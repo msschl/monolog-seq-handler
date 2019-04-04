@@ -58,7 +58,7 @@ abstract class SeqBaseFormatter extends JsonFormatter
      * @param array $recod The log record to normalize.
      * @return array
      */
-    protected function normalize($record)
+    protected function normalize($record, $depth = 0)
     {
         if (!is_array($record) && !$record instanceof \Traversable) {
             /* istanbul ignore next */
